@@ -9,7 +9,9 @@ import os
 import subprocess
 import urllib
 import shutil
+import easygui as eg
 import glob
+import zipfile
 def getOptions():
     with open("data.json") as file:
         options=json.load(file)
@@ -18,7 +20,7 @@ def getOptions():
     fileToGrabModURLsFrom="mods.txt"
     mcversion="1.16.5"
     loaderVersion="0.11.3"
-    mineDir = os.path.expandvars("%appdata%\\.minecraft\\" if sys.platform=="win32" else ".\\")#elif sys.platform()=="linux2" "~/.minecraft/" elif sys.platform()=="darwin" "~/Application Support/minecraft/"
+    mineDir = os.path.expandvars("%appdata%\\.minecraft\\" if sys.platform=="win32" else "./")#elif sys.platform()=="linux2" "~/.minecraft/" elif sys.platform()=="darwin" "~/Application Support/minecraft/"
     linkToFabricInstaller="https://maven.fabricmc.net/net/fabricmc/fabric-installer/0.7.2/fabric-installer-0.7.2.jar"
     if "mcversoin" in options:
         mcversion=options["mcversion"]
@@ -51,6 +53,19 @@ def getOptions():
     return OPTIONS
 def main():
     try:
+        if not os.path.exists("data.json"):
+            logging.info("No data.json found, using browser format...")
+            myPack=eg.enterbox("Search for a modpack")
+            modpacks=json.loads(urllib.request.urlopen("https://raw.githubusercontent.com/Jefaxe/ModpackInstaller/main/meta/modpacks.json").read())
+            print(modpacks)
+            myPackLink=modpacks[myPack]
+            urllib.request.urlretrieve(myPackLink+"/main/data.json","data.json")
+            urllib.request.urlretrieve(myPackLink+"/main/mods.txt","mods.txt")
+            urllib.request.urlretrieve(myPackLink+"/main/overrides.zip","overrides.zip")
+            
+            with zipfile.ZipFile('overrides.zip', 'r') as zipObj:
+               # Extract all the contents of zip file in current directory
+               zipObj.extractall()
         optionsDEF=getOptions()
         if not os.path.exists(optionsDEF["mine"]+"/modpacks/"+optionsDEF["name"]):
             os.makedirs(optionsDEF["mine"]+"/modpacks/"+optionsDEF["name"])
